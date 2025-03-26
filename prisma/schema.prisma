@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Order {
+  SrNo              Int     @unique  
+  orderNo           BigInt  @id @unique 
+  weight            Int?
+  quantity          Int?
+  orderDeliveryDate DateTime
+  grade             String
+  thickness         Int?
+  width             Int?
+  orderThickness    Int?
+  orderWidth        Int?
+  tdc               String?
+  deliveryPlace     String
+  customerName      String?
+  shippedBy         String
+  createdBy         String
+  createdAt         DateTime @default(now())
+  producedQuantityWeight Int?  // Nullable
+  producedQuantityNumber Int?  // Nullable
+  balanceWeight          Int?  // Nullable
+  balanceNumber          Int?  // Nullable
+  leastProductionDate    DateTime?  // Nullable
+
+  timeToShip            Int?
+  timeForQualityCheck   Int?
+}
+
+
+model Inventory {
+  IN_MaterialName      String   @unique // Ensure unique material names
+  IN_Thickness         Float
+  IN_Width             Float
+  IN_Weight            Float
+  IN_Grade             String
+  ActuallWeight        Float
+  In_ProductionDate    DateTime
+  YardArrivalDate      DateTime
+  Residence_INYard     String
+  YardNO               String
+  Position             String
+  Manufacturing_Location String
+  Manufacturer         String
+
+  createdAt            DateTime @default(now()) // Timestamp for record creation
+  updatedAt            DateTime @updatedAt      // Auto-updated timestamp
+}
+
+model InputMaterial {
+  id        String  @id  
+  weight    Int
+  number    Int
+  grade     String
+  thickness String  // Storing range as a string (e.g., "1.5-4.5")
+  width     Int
+  createdAt DateTime @default(now()) // Timestamp for record creation
+}
+
+
+model RuleTable {
+  id          Int      @id @default(autoincrement())
+  ruleNo      String   @unique
+  ruleName    String   @unique // Make ruleName unique to use it as a foreign key
+  remark      String?
+  modifyDate  DateTime @updatedAt
+  createDate  DateTime @default(now())
+  createdBy   String
+  criteria    RuleCriteria[]
+}
+
+model RuleCriteria {
+  id                   Int      @id @default(autoincrement())
+  ruleName             String   // Change ruleId to ruleName for joining
+  criteria             String
+  parameterType        String?
+  parameterValue       String?
+  parameterMin         Float?
+  parameterMax         Float?
+  logic                String?
+  controlParameter     String?
+  controlInputType     String?
+  controlValue         String?
+  controlMin           Float?
+  controlMax           Float?
+  parameterStatus      String   @default("Enable")
+  rule                 RuleTable @relation(fields: [ruleName], references: [ruleName], onDelete: Cascade)
+}

@@ -22,6 +22,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white text-xl font-semibold py-4 px-6 shadow-md">
+        Production Scheduling
+    </div>
         {children}
       </body>
     </html>
