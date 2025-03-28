@@ -23,8 +23,8 @@ model Order {
   grade             String
   thickness         Int?
   width             Int?
-  orderThickness    Int?
-  orderWidth        Int?
+  orderThickness    Float?
+  orderWidth        Float?
   tdc               String?
   deliveryPlace     String
   customerName      String?
@@ -99,4 +99,33 @@ model RuleCriteria {
   controlMax           Float?
   parameterStatus      String   @default("Enable")
   rule                 RuleTable @relation(fields: [ruleName], references: [ruleName], onDelete: Cascade)
+}
+
+model MaterialAllocationRules {
+  id              Int      @id @default(autoincrement())
+  orderParameter  String   // "Order Thickness", "Order Width", "Grade"
+  logic           String   // "Less Than", "Less Than Equal To", "Equal To", "More Than", "More Than Equal To"
+  parameter       Float    // Numeric value for the rule (e.g., tolerance)
+  materialParameter String // "IN_Thickness", "IN_Width", "IN_Grade"
+  status          String   @default("Active") // "Active" or "Inactive"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+model ScheduleConfirmation {
+  id              Int      @id @default(autoincrement())
+  scheduleNo      String   @unique // e.g., "SCH001"
+  orderNo         BigInt   // From Order model
+  outMaterialNo   String   // e.g., "NA00001"
+  outThickness    Float?   // Nullable, from Order.orderThickness
+  outWidth        Float?   // Nullable, from Order.orderWidth
+  outGrade        String?  // Nullable, from Order.grade
+  outCoilWeight   Int?     // Nullable, from Order.weight
+  inMatNo         String   // From Inventory.IN_MaterialName
+  inThickness     Float    // From Inventory.IN_Thickness
+  inWidth         Float    // From Inventory.IN_Width
+  inGrade         String   // From Inventory.IN_Grade
+  inactualWeight    Float    // From Inventory.ActuallWeight (assuming typo in your schema)
+  createdAt       DateTime @default(now())
 }

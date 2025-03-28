@@ -734,3 +734,726 @@ export default function QueryCondition() {
     </div>
   );
 }
+
+
+
+// "use client";
+
+// import { useState, useEffect } from "react";
+// import { Button } from "@/components/ui/button";
+// import { Checkbox } from "@/components/ui/checkbox";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogFooter,
+// } from "@/components/ui/dialog";
+// import { Input } from "@/components/ui/input";
+// import {
+//   getSchedules,
+//   getMaterialsByScheduleIds,
+//   updateSchedule,
+//   deleteMaterials,
+//   changeMaterialSequence,
+//   swapMaterials,
+//   splitSchedule,
+// } from "../actions/scheduleActions";
+
+// export default function QueryCondition() {
+//   const [selectedSchedules, setSelectedSchedules] = useState([]);
+//   const [selectedMaterials, setSelectedMaterials] = useState([]);
+//   const [scheduleData, setScheduleData] = useState([]);
+//   const [materialData, setMaterialData] = useState([]);
+//   const [isSequenceDialogOpen, setIsSequenceDialogOpen] = useState(false);
+//   const [newPositionValue, setNewPositionValue] = useState("");
+//   const [sequenceChangeMode, setSequenceChangeMode] = useState("start");
+//   const [referencePosition, setReferencePosition] = useState("");
+//   const [isSwapDialogOpen, setIsSwapDialogOpen] = useState(false);
+//   const [swapToPosition, setSwapToPosition] = useState("");
+//   const [isSplitDialogOpen, setIsSplitDialogOpen] = useState(false);
+//   const [splitDivisions, setSplitDivisions] = useState("");
+//   const [splitPreview, setSplitPreview] = useState(null);
+//   const [ruleCheckHighlighted, setRuleCheckHighlighted] = useState(false);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   // Fetch initial data
+//   useEffect(() => {
+//     async function fetchData() {
+//       setLoading(true);
+//       try {
+//         const schedules = await getSchedules();
+//         setScheduleData(schedules);
+//       } catch (err) {
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     }
+//     fetchData();
+//   }, []);
+
+//   useEffect(() => {
+//     async function fetchMaterials() {
+//       if (selectedSchedules.length > 0) {
+//         setLoading(true);
+//         try {
+//           const materials = await getMaterialsByScheduleIds(selectedSchedules);
+//           setMaterialData(materials);
+//         } catch (err) {
+//           setError(err.message);
+//         } finally {
+//           setLoading(false);
+//         }
+//       } else {
+//         setMaterialData([]);
+//       }
+//     }
+//     fetchMaterials();
+//   }, [selectedSchedules]);
+
+//   const handleScheduleSelect = (id) => {
+//     setSelectedSchedules((prev) =>
+//       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+//     );
+//     setSelectedMaterials([]);
+//   };
+
+//   const handleMaterialSelect = (id) => {
+//     setSelectedMaterials((prev) =>
+//       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+//     );
+//   };
+
+//   const getAvailableReferencePositions = () => {
+//     const scheduleMaterials = materialData.filter((m) =>
+//       selectedSchedules.includes(
+//         scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//       )
+//     );
+//     return scheduleMaterials
+//       .filter((m) => !selectedMaterials.includes(m.id))
+//       .map((m) => ({
+//         value: m.sequenceNo,
+//         label: `${m.sequenceNo} - ${m.outMatMo}`,
+//       }));
+//   };
+
+//   const openSequenceDialog = () => {
+//     if (selectedMaterials.length === 0) {
+//       alert("Please select at least one material to change sequence");
+//       return;
+//     }
+//     setNewPositionValue("1");
+//     setSequenceChangeMode("start");
+//     setReferencePosition("");
+//     setIsSequenceDialogOpen(true);
+//   };
+
+//   const handleSequenceChange = async () => {
+//     if (selectedMaterials.length === 0 || selectedSchedules.length !== 1) return;
+
+//     setLoading(true);
+//     try {
+//       await changeMaterialSequence(selectedSchedules[0], selectedMaterials, {
+//         mode: sequenceChangeMode,
+//         value: newPositionValue,
+//         reference: referencePosition,
+//       });
+//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
+//       setMaterialData(materials);
+//       setIsSequenceDialogOpen(false);
+//       setSelectedMaterials([]);
+//       setRuleCheckHighlighted(true);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const openSwapDialog = () => {
+//     if (selectedMaterials.length === 0) {
+//       alert("Please select at least one material to swap");
+//       return;
+//     }
+//     setSwapToPosition("");
+//     setIsSwapDialogOpen(true);
+//   };
+
+//   const handleSwap = async () => {
+//     if (!swapToPosition || selectedMaterials.length === 0 || selectedSchedules.length !== 1) return;
+
+//     setLoading(true);
+//     try {
+//       await swapMaterials(selectedSchedules[0], selectedMaterials, swapToPosition);
+//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
+//       setMaterialData(materials);
+//       setIsSwapDialogOpen(false);
+//       setSelectedMaterials([]);
+//       setRuleCheckHighlighted(true);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const openSplitDialog = () => {
+//     if (selectedSchedules.length !== 1) {
+//       alert("Please select exactly one schedule to split");
+//       return;
+//     }
+//     const selectedSchedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
+//     if (selectedSchedule.status !== "Pending") {
+//       alert("Split is only available for schedules with 'Pending' status");
+//       return;
+//     }
+//     const allMaterialIds = materialData
+//       .filter((m) =>
+//         selectedSchedules.includes(
+//           scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//         )
+//       )
+//       .map((m) => m.id);
+//     setSelectedMaterials(allMaterialIds);
+//     setSplitDivisions("");
+//     setSplitPreview(null);
+//     setIsSplitDialogOpen(true);
+//   };
+
+//   const generateSplitPreview = () => {
+//     if (!splitDivisions || isNaN(splitDivisions) || splitDivisions < 1) {
+//       alert("Please enter a valid number of divisions");
+//       return;
+//     }
+
+//     const divisions = parseInt(splitDivisions);
+//     const scheduleMaterials = materialData.filter((m) =>
+//       selectedSchedules.includes(
+//         scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//       )
+//     );
+
+//     if (scheduleMaterials.length === 0) {
+//       alert("No materials available to split");
+//       return;
+//     }
+
+//     const itemsPerDivision = Math.ceil(scheduleMaterials.length / divisions);
+//     const selectedSchedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
+//     const preview = [];
+
+//     for (let i = 0; i < divisions; i++) {
+//       const startIndex = i * itemsPerDivision;
+//       const endIndex = Math.min((i + 1) * itemsPerDivision, scheduleMaterials.length);
+//       const subScheduleItems = scheduleMaterials.slice(startIndex, endIndex).map((item, index) => ({
+//         ...item,
+//         sequenceNo: (index + 1).toString().padStart(3, "0"),
+//       }));
+
+//       preview.push({
+//         newScheduleNo: `${selectedSchedule.scheduleNo}-${(i + 1).toString().padStart(2, "0")}`,
+//         items: subScheduleItems,
+//         totalMaterialNumber: subScheduleItems.length,
+//         totalMatWeight: subScheduleItems.reduce(
+//           (sum, item) => sum + (parseFloat(item.outActualWeight) || 0),
+//           0
+//         ),
+//       });
+//     }
+
+//     setSplitPreview(preview);
+//   };
+
+//   const handleSplitConfirm = async () => {
+//     if (!splitPreview || selectedSchedules.length !== 1) return;
+
+//     setLoading(true);
+//     try {
+//       await splitSchedule(selectedSchedules[0], parseInt(splitDivisions));
+//       const schedules = await getSchedules();
+//       setScheduleData(schedules);
+//       setIsSplitDialogOpen(false);
+//       setSelectedSchedules([]);
+//       setSelectedMaterials([]);
+//       setSplitPreview(null);
+//       setRuleCheckHighlighted(true);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleUpdate = async () => {
+//     if (selectedSchedules.length !== 1) {
+//       alert("Please select exactly one schedule to update");
+//       return;
+//     }
+//     const schedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
+//     setLoading(true);
+//     try {
+//       await updateSchedule(schedule.id, {
+//         status: schedule.status, // Example: modify as needed
+//         totalMaterialNumber: schedule.totalMaterialNumber,
+//         totalMatWeight: schedule.totalMatWeight,
+//         totalRollingLength: schedule.totalRollingLength,
+//         estimatedTime: schedule.estimatedTime,
+//         madeBy: schedule.madeBy,
+//       });
+//       setRuleCheckHighlighted(true);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleDelete = async () => {
+//     if (selectedMaterials.length === 0) {
+//       alert("Please select at least one material to delete");
+//       return;
+//     }
+
+//     setLoading(true);
+//     try {
+//       await deleteMaterials(selectedMaterials);
+//       const schedules = await getSchedules();
+//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
+//       setScheduleData(schedules);
+//       setMaterialData(materials);
+//       setSelectedMaterials([]);
+//       setRuleCheckHighlighted(true);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const getScheduleMaterialCount = () => {
+//     return materialData.filter((m) =>
+//       selectedSchedules.includes(
+//         scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//       )
+//     ).length;
+//   };
+
+//   const isSplitAllowed = () =>
+//     selectedSchedules.length === 1 &&
+//     scheduleData.find((s) => s.id === selectedSchedules[0])?.status === "Pending";
+
+//   return (
+//     <div className="min-h-screen bg-gray-900 py-8 px-4">
+//       <div className="max-w-[95%] mx-auto">
+//         <h1 className="text-3xl font-bold mb-8 text-white">Query Condition</h1>
+//         {error && <p className="text-red-500 mb-4">{error}</p>}
+//         {loading && <p className="text-white mb-4">Loading...</p>}
+
+//         {/* First Table - Schedules */}
+//         <div className="text-white shadow-lg overflow-hidden mb-8 border border-white rounded-lg">
+//           <div className="overflow-x-auto">
+//             <table className="w-full border-collapse">
+//               <thead>
+//                 <tr className="bg-gray-700">
+//                   <th className="px-6 py-4 border border-white"></th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Schedule No.</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Status</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Material Number</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Mat Weight</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Rolling Length</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Estimated Time</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Made By</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Created Date</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {scheduleData.map((schedule) => (
+//                   <tr key={schedule.id} className="hover:bg-indigo-600/20 transition-colors">
+//                     <td className="px-6 py-4 border border-white">
+//                       <Checkbox
+//                         checked={selectedSchedules.includes(schedule.id)}
+//                         onCheckedChange={() => handleScheduleSelect(schedule.id)}
+//                       />
+//                     </td>
+//                     <td className="px-6 py-4 border border-white">{schedule.scheduleNo}</td>
+//                     <td className="px-6 py-4 border border-white">
+//                       <span
+//                         className={`px-3 py-1 rounded-full text-xs font-medium ${
+//                           schedule.status === "Completed"
+//                             ? "bg-green-600 text-white"
+//                             : schedule.status === "In Progress"
+//                             ? "bg-blue-600 text-white"
+//                             : "bg-yellow-600 text-white"
+//                         }`}
+//                       >
+//                         {schedule.status}
+//                       </span>
+//                     </td>
+//                     <td className="px-6 py-4 border border-white">{schedule.totalMaterialNumber}</td>
+//                     <td className="px-6 py-4 border border-white">{schedule.totalMatWeight}</td>
+//                     <td className="px-6 py-4 border border-white">{schedule.totalRollingLength}</td>
+//                     <td className="px-6 py-4 border border-white">{schedule.estimatedTime}</td>
+//                     <td className="px-6 py-4 border border-white">{schedule.madeBy}</td>
+//                     <td className="px-6 py-4 border border-white">
+//                       {new Date(schedule.createdDate).toISOString().split("T")[0]}
+//                     </td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//           <div className="p-4 flex justify-end gap-4">
+//             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Query</Button>
+//             <Button
+//               variant="outline"
+//               className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//             >
+//               Rollback
+//             </Button>
+//           </div>
+//         </div>
+
+//         {/* Second Table - Materials */}
+//         {selectedSchedules.length > 0 && (
+//           <div className="bg-gray-900 shadow-lg overflow-hidden border text-white border-white rounded-lg">
+//             <div className="overflow-x-auto">
+//               <table className="w-full border-collapse">
+//                 <thead>
+//                   <tr className="bg-gray-700">
+//                     <th className="px-6 py-4 border border-indigo-300"></th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Number</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Sequence No.</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Mat Mo.</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Thickness</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Width</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Grade</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Coil Weight</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Actual Weight</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Material Summary</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Mat No.</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Thickness</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Width</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Grade</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Actual Weight</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {materialData
+//                     .filter((m) =>
+//                       selectedSchedules.includes(
+//                         scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//                       )
+//                     )
+//                     .map((material, index) => (
+//                       <tr key={material.id} className="hover:bg-indigo-600/20 transition-colors">
+//                         <td className="px-6 py-4 border border-white">
+//                           <Checkbox
+//                             checked={selectedMaterials.includes(material.id)}
+//                             onCheckedChange={() => handleMaterialSelect(material.id)}
+//                           />
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">{(index + 1).toString().padStart(2, "0")}</td>
+//                         <td className="px-6 py-4 border border-white">{material.sequenceNo}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outMatMo}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outThickness}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outWidth}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outGrade}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outCoilWeight}</td>
+//                         <td className="px-6 py-4 border border-white">{material.outActualWeight}</td>
+//                         <td className="px-6 py-4 border border-white">{material.materialSummary}</td>
+//                         <td className="px-6 py-4 border border-white">{material.inMatNo}</td>
+//                         <td className="px-6 py-4 border border-white">{material.inThickness}</td>
+//                         <td className="px-6 py-4 border border-white">{material.inWidth}</td>
+//                         <td className="px-6 py-4 border border-white">{material.grade}</td>
+//                         <td className="px-6 py-4 border border-white">{material.actualWeight}</td>
+//                       </tr>
+//                     ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//             <div className="p-4 bg-gray-900 flex flex-wrap gap-4">
+//               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Query</Button>
+//               <Button
+//                 variant="outline"
+//                 className={`border-white text-indigo-300 hover:bg-indigo-600 hover:text-white ${
+//                   ruleCheckHighlighted ? "bg-yellow-600 text-white" : ""
+//                 }`}
+//               >
+//                 Rule Check
+//               </Button>
+//               <Button
+//                 onClick={handleUpdate}
+//                 variant="outline"
+//                 className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//               >
+//                 Update
+//               </Button>
+//               <Button
+//                 onClick={openSequenceDialog}
+//                 variant="outline"
+//                 className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//               >
+//                 Sequence Change
+//               </Button>
+//               <Button
+//                 onClick={handleDelete}
+//                 variant="outline"
+//                 className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//               >
+//                 Delete
+//               </Button>
+//               {isSplitAllowed() && (
+//                 <Button
+//                   onClick={openSplitDialog}
+//                   variant="outline"
+//                   className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//                 >
+//                   Split
+//                 </Button>
+//               )}
+//               <Button
+//                 onClick={openSwapDialog}
+//                 variant="outline"
+//                 className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//               >
+//                 Swap
+//               </Button>
+//               <Button
+//                 variant="outline"
+//                 className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//               >
+//                 Release
+//               </Button>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* Sequence Change Dialog */}
+//       <Dialog open={isSequenceDialogOpen} onOpenChange={setIsSequenceDialogOpen}>
+//         <DialogContent className="bg-gray-800 text-white border-indigo-300">
+//           <DialogHeader>
+//             <DialogTitle className="text-lg font-semibold text-white">
+//               Change Sequence for {selectedMaterials.length} Item(s)
+//             </DialogTitle>
+//           </DialogHeader>
+//           <div className="py-4 space-y-4">
+//             <div>
+//               <label className="block text-sm font-medium mb-2">Change Mode:</label>
+//               <select
+//                 value={sequenceChangeMode}
+//                 onChange={(e) => setSequenceChangeMode(e.target.value)}
+//                 className="w-full p-2 bg-gray-700 border border-indigo-300 rounded text-white"
+//               >
+//                 <option value="start">Start at Position</option>
+//                 <option value="before">Before Item</option>
+//                 <option value="after">After Item</option>
+//               </select>
+//             </div>
+
+//             {sequenceChangeMode === "start" && (
+//               <div>
+//                 <label className="block text-sm font-medium mb-2">
+//                   Position (1-{getScheduleMaterialCount()}):
+//                 </label>
+//                 <Input
+//                   type="number"
+//                   min="1"
+//                   max={getScheduleMaterialCount()}
+//                   value={newPositionValue}
+//                   onChange={(e) => setNewPositionValue(e.target.value)}
+//                   className="bg-gray-700 border-indigo-300 text-white"
+//                 />
+//               </div>
+//             )}
+
+//             {(sequenceChangeMode === "before" || sequenceChangeMode === "after") && (
+//               <div>
+//                 <label className="block text-sm font-medium mb-2">Select reference item:</label>
+//                 <select
+//                   value={referencePosition}
+//                   onChange={(e) => setReferencePosition(e.target.value)}
+//                   className="w-full p-2 bg-gray-700 border border-indigo-300 rounded text-white"
+//                 >
+//                   <option value="">Select an item</option>
+//                   {getAvailableReferencePositions().map((pos) => (
+//                     <option key={pos.value} value={pos.value}>
+//                       {pos.label}
+//                     </option>
+//                   ))}
+//                 </select>
+//               </div>
+//             )}
+//           </div>
+//           <DialogFooter>
+//             <Button
+//               onClick={() => setIsSequenceDialogOpen(false)}
+//               variant="outline"
+//               className="border-indigo-300 text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               onClick={handleSequenceChange}
+//               className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
+//               disabled={loading}
+//             >
+//               Apply
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+
+//       {/* Swap Dialog */}
+//       <Dialog open={isSwapDialogOpen} onOpenChange={setIsSwapDialogOpen}>
+//         <DialogContent className="bg-gray-800 text-white border-indigo-300">
+//           <DialogHeader>
+//             <DialogTitle className="text-lg font-semibold text-white">
+//               Swap {selectedMaterials.length} Material(s)
+//             </DialogTitle>
+//           </DialogHeader>
+//           <div className="py-4 space-y-4">
+//             <div>
+//               <label className="block text-sm font-medium mb-2">
+//                 Moving from positions:{" "}
+//                 {selectedMaterials
+//                   .map((id) => {
+//                     const index = materialData
+//                       .filter((m) =>
+//                         selectedSchedules.includes(
+//                           scheduleData.find((s) => s.scheduleNo === m.scheduleNo)?.id
+//                         )
+//                       )
+//                       .findIndex((m) => m.id === id);
+//                     return (index + 1).toString().padStart(2, "0");
+//                   })
+//                   .join(", ")}
+//               </label>
+//               <Input
+//                 type="number"
+//                 min="1"
+//                 max={getScheduleMaterialCount()}
+//                 value={swapToPosition}
+//                 onChange={(e) => setSwapToPosition(e.target.value)}
+//                 placeholder={`Enter starting position to swap with (e.g., 1)`}
+//                 className="bg-gray-700 border-indigo-300 text-white"
+//               />
+//               <p className="text-sm text-gray-400 mt-1">
+//                 Will swap with {selectedMaterials.length} consecutive position(s) starting from this
+//                 position
+//               </p>
+//             </div>
+//           </div>
+//           <DialogFooter>
+//             <Button
+//               onClick={() => setIsSwapDialogOpen(false)}
+//               variant="outline"
+//               className="border-indigo-300 text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               onClick={handleSwap}
+//               className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
+//               disabled={loading}
+//             >
+//               Swap
+//             </Button>
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+
+//       {/* Split Dialog */}
+//       <Dialog open={isSplitDialogOpen} onOpenChange={setIsSplitDialogOpen}>
+//         <DialogContent className="bg-gray-800 text-white border-indigo-300 max-w-4xl max-h-[80vh] overflow-y-auto">
+//           <DialogHeader>
+//             <DialogTitle className="text-lg font-semibold text-white">
+//               Split Schedule{" "}
+//               {selectedSchedules.length === 1 &&
+//                 scheduleData.find((s) => s.id === selectedSchedules[0])?.scheduleNo}
+//             </DialogTitle>
+//           </DialogHeader>
+//           <div className="py-4 space-y-4">
+//             <div>
+//               <label className="block text-sm font-medium mb-2">Number of Divisions:</label>
+//               <div className="flex">
+//                 <Input
+//                   type="number"
+//                   min="1"
+//                   value={splitDivisions}
+//                   onChange={(e) => setSplitDivisions(e.target.value)}
+//                   className="bg-gray-700 border-indigo-300 text-white w-32 px-1"
+//                   placeholder="Enter divisions"
+//                 />
+//                 <Button
+//                   onClick={generateSplitPreview}
+//                   className="ml-4 bg-indigo-600 hover:bg-indigo-700 text-white"
+//                 >
+//                   Generate Preview
+//                 </Button>
+//               </div>
+//             </div>
+
+//             {splitPreview && (
+//               <div className="mt-4">
+//                 <h3 className="text-lg font-medium mb-2">Preview:</h3>
+//                 <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+//                   {splitPreview.map((preview, index) => (
+//                     <div key={`${preview.newScheduleNo}-${index}`} className="border border-indigo-300 p-4 rounded">
+//                       <h4 className="font-semibold">{preview.newScheduleNo}</h4>
+//                       <p>Items: {preview.totalMaterialNumber}</p>
+//                       <p>Total Weight: {preview.totalMatWeight}</p>
+//                       <div className="mt-2">
+//                         <table className="w-full text-sm">
+//                           <thead>
+//                             <tr className="bg-gray-700">
+//                               <th className="p-2">Number</th>
+//                               <th className="p-2">Sequence No.</th>
+//                               <th className="p-2">Out Mat No.</th>
+//                               <th className="p-2">Weight</th>
+//                             </tr>
+//                           </thead>
+//                           <tbody>
+//                             {preview.items.map((item, itemIndex) => (
+//                               <tr key={`${item.id}-${index}-${itemIndex}`}>
+//                                 <td className="p-2">{(itemIndex + 1).toString().padStart(2, "0")}</td>
+//                                 <td className="p-2">{item.sequenceNo}</td>
+//                                 <td className="p-2">{item.outMatMo}</td>
+//                                 <td className="p-2">{item.outActualWeight}</td>
+//                               </tr>
+//                             ))}
+//                           </tbody>
+//                         </table>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//           <DialogFooter className="sticky bottom-0 bg-gray-800 py-4">
+//             <Button
+//               onClick={() => setIsSplitDialogOpen(false)}
+//               variant="outline"
+//               className="border-indigo-300 text-indigo-300 hover:bg-indigo-600 hover:text-white"
+//             >
+//               Cancel
+//             </Button>
+//             {splitPreview && (
+//               <Button
+//                 onClick={handleSplitConfirm}
+//                 className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
+//                 disabled={loading}
+//               >
+//                 Confirm Split
+//               </Button>
+//             )}
+//           </DialogFooter>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }
