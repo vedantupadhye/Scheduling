@@ -115,7 +115,7 @@ model MaterialAllocationRules {
 
 model ScheduleConfirmation {
   id              Int      @id @default(autoincrement())
-  scheduleNo      String   @unique // e.g., "SCH001"
+  scheduleNo      String   // e.g., "SCH001"
   orderNo         BigInt   // From Order model
   outMaterialNo   String   // e.g., "NA00001"
   outThickness    Float?   // Nullable, from Order.orderThickness
@@ -129,3 +129,31 @@ model ScheduleConfirmation {
   inactualWeight    Float    // From Inventory.ActuallWeight (assuming typo in your schema)
   createdAt       DateTime @default(now())
 }
+model ScheduleMaker {
+  id              Int      @id @default(autoincrement())
+  orderNo         BigInt
+  inMaterialName  String
+  inThickness     Float
+  inWidth         Float
+  inGrade         String
+  inactualWeight  Float
+  orderThickness  Float?
+  orderWidth      Float?
+  grade           String?
+  weight          Int?
+  In_ProductionDate DateTime? // Added to match Inventory
+  YardArrivalDate  DateTime? // Added to match Inventory
+  Residence_INYard String?   // Added to match Inventory
+  YardNO           String?   // Added to match Inventory
+  Position         String?   // Added to match Inventory
+  Manufacturing_Location String? // Added to match Inventory
+  Manufacturer     String?   // Added to match Inventory
+  createdAt       DateTime @default(now())
+}
+
+model ScheduleCounter {
+  id    Int @id @default(autoincrement())
+  count Int @default(1)
+}
+
+

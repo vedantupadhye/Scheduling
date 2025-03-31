@@ -168,8 +168,48 @@ async function main() {
   console.log("✅ Order and Inventory data seeded successfully");
 }
 
+const schedule = await prisma.scheduleSummary.upsert({
+  where: { scheduleNo: 'SCH001' },
+  update: {}, // If it exists, do nothing
+  create: {
+    scheduleNo: 'SCH001',
+    status: 'Pending',
+    totalMaterialNumber: 0,
+    totalMatWeight: 0.0,
+    totalRollingLength: 0.0,
+    estimatedTime: '0h',
+    madeBy: 'Admin',
+    createdDate: new Date(),
+  },
+});
+
+console.log('✅ ScheduleSummary seeded:', schedule);
+
+// Insert a record into ScheduleConfirmation
+await prisma.scheduleConfirmation.create({
+  data: {
+    scheduleNo: 'SCH001', // Must match an existing scheduleNo in ScheduleSummary
+    orderNo: 12345,
+    outMaterialNo: 'NA00001',
+    outThickness: 2.5,
+    outWidth: 300.0,
+    outGrade: 'GradeB',
+    outCoilWeight: 500,
+    inMatNo: 'IN_001',
+    inThickness: 5.0,
+    inWidth: 200.0,
+    inGrade: 'GradeA',
+    inactualWeight: 100.5,
+    materialSummary: 'Pending',
+  },
+});
+
+console.log('✅ ScheduleConfirmation seeded successfully');
+
 main()
   .catch((e) => console.error(e))
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+  

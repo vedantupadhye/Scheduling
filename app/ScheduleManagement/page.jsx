@@ -737,6 +737,16 @@ export default function QueryCondition() {
 
 
 
+
+
+
+
+
+
+
+
+
+
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -752,13 +762,13 @@ export default function QueryCondition() {
 // import { Input } from "@/components/ui/input";
 // import {
 //   getSchedules,
-//   getMaterialsByScheduleIds,
-//   updateSchedule,
-//   deleteMaterials,
-//   changeMaterialSequence,
+//   getMaterialsByScheduleNos,
+//   changeSequence,
 //   swapMaterials,
 //   splitSchedule,
-// } from "../actions/scheduleActions";
+//   updateSchedule,
+//   deleteMaterials,
+// } from "@/app/actions/scheduleManagement";
 
 // export default function QueryCondition() {
 //   const [selectedSchedules, setSelectedSchedules] = useState([]);
@@ -775,39 +785,37 @@ export default function QueryCondition() {
 //   const [splitDivisions, setSplitDivisions] = useState("");
 //   const [splitPreview, setSplitPreview] = useState(null);
 //   const [ruleCheckHighlighted, setRuleCheckHighlighted] = useState(false);
-//   const [loading, setLoading] = useState(false);
+//   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 
-//   // Fetch initial data
 //   useEffect(() => {
-//     async function fetchData() {
+//     async function fetchInitialData() {
 //       setLoading(true);
-//       try {
-//         const schedules = await getSchedules();
-//         setScheduleData(schedules);
-//       } catch (err) {
-//         setError(err.message);
-//       } finally {
-//         setLoading(false);
+//       const schedulesResult = await getSchedules();
+//       if (schedulesResult.success) {
+//         setScheduleData(schedulesResult.data);
+//       } else {
+//         setError("Failed to fetch schedules: " + schedulesResult.error);
 //       }
+//       setLoading(false);
 //     }
-//     fetchData();
+//     fetchInitialData();
 //   }, []);
 
 //   useEffect(() => {
 //     async function fetchMaterials() {
-//       if (selectedSchedules.length > 0) {
-//         setLoading(true);
-//         try {
-//           const materials = await getMaterialsByScheduleIds(selectedSchedules);
-//           setMaterialData(materials);
-//         } catch (err) {
-//           setError(err.message);
-//         } finally {
-//           setLoading(false);
-//         }
-//       } else {
+//       if (selectedSchedules.length === 0) {
 //         setMaterialData([]);
+//         return;
+//       }
+//       const scheduleNos = scheduleData
+//         .filter((s) => selectedSchedules.includes(s.id))
+//         .map((s) => s.scheduleNo);
+//       const materialsResult = await getMaterialsByScheduleNos(scheduleNos);
+//       if (materialsResult.success) {
+//         setMaterialData(materialsResult.data);
+//       } else {
+//         setError("Failed to fetch materials: " + materialsResult.error);
 //       }
 //     }
 //     fetchMaterials();
@@ -836,7 +844,7 @@ export default function QueryCondition() {
 //       .filter((m) => !selectedMaterials.includes(m.id))
 //       .map((m) => ({
 //         value: m.sequenceNo,
-//         label: `${m.sequenceNo} - ${m.outMatMo}`,
+//         label: `${m.sequenceNo} - ${m.outMaterialNo}`,
 //       }));
 //   };
 
@@ -852,24 +860,36 @@ export default function QueryCondition() {
 //   };
 
 //   const handleSequenceChange = async () => {
-//     if (selectedMaterials.length === 0 || selectedSchedules.length !== 1) return;
+//     if (selectedMaterials.length === 0) return;
 
-//     setLoading(true);
-//     try {
-//       await changeMaterialSequence(selectedSchedules[0], selectedMaterials, {
-//         mode: sequenceChangeMode,
-//         value: newPositionValue,
-//         reference: referencePosition,
-//       });
-//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
-//       setMaterialData(materials);
-//       setIsSequenceDialogOpen(false);
-//       setSelectedMaterials([]);
-//       setRuleCheckHighlighted(true);
-//     } catch (err) {
-//       setError(err.message);
-//     } finally {
-//       setLoading(false);
+//     const scheduleNo = materialData.find((m) => selectedMaterials.includes(m.id))
+//       .scheduleNo;
+//     const result = await changeSequence(
+//       scheduleNo,
+//       selectedMaterials,
+//       newPositionValue,
+//       sequenceChangeMode,
+//       referencePosition
+//     );
+
+//     if (result.success) {
+//       const materialsResult = await getMaterialsByScheduleNos([scheduleNo]);
+//       if (materialsResult.success) {
+//         setMaterialData((prev) =>
+//           prev.map((m) =>
+//             m.scheduleNo === scheduleNo
+//               ? materialsResult.data.find((newM) => newM.id === m.id) || m
+//               : m
+//           )
+//         );
+//         setIsSequenceDialogOpen(false);
+//         setSelectedMaterials([]);
+//         setRuleCheckHighlighted(true);
+//       } else {
+//         setError("Failed to refresh materials: " + materialsResult.error);
+//       }
+//     } else {
+//       setError("Failed to change sequence: " + result.error);
 //     }
 //   };
 
@@ -883,20 +903,34 @@ export default function QueryCondition() {
 //   };
 
 //   const handleSwap = async () => {
-//     if (!swapToPosition || selectedMaterials.length === 0 || selectedSchedules.length !== 1) return;
+//     if (!swapToPosition || selectedMaterials.length === 0) return;
 
-//     setLoading(true);
-//     try {
-//       await swapMaterials(selectedSchedules[0], selectedMaterials, swapToPosition);
-//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
-//       setMaterialData(materials);
-//       setIsSwapDialogOpen(false);
-//       setSelectedMaterials([]);
-//       setRuleCheckHighlighted(true);
-//     } catch (err) {
-//       setError(err.message);
-//     } finally {
-//       setLoading(false);
+//     const scheduleNo = materialData.find((m) => selectedMaterials.includes(m.id))
+//       .scheduleNo;
+//     const result = await swapMaterials(
+//       scheduleNo,
+//       selectedMaterials,
+//       swapToPosition
+//     );
+
+//     if (result.success) {
+//       const materialsResult = await getMaterialsByScheduleNos([scheduleNo]);
+//       if (materialsResult.success) {
+//         setMaterialData((prev) =>
+//           prev.map((m) =>
+//             m.scheduleNo === scheduleNo
+//               ? materialsResult.data.find((newM) => newM.id === m.id) || m
+//               : m
+//           )
+//         );
+//         setIsSwapDialogOpen(false);
+//         setSelectedMaterials([]);
+//         setRuleCheckHighlighted(true);
+//       } else {
+//         setError("Failed to refresh materials: " + materialsResult.error);
+//       }
+//     } else {
+//       setError("Failed to swap materials: " + result.error);
 //     }
 //   };
 
@@ -905,7 +939,9 @@ export default function QueryCondition() {
 //       alert("Please select exactly one schedule to split");
 //       return;
 //     }
-//     const selectedSchedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
+//     const selectedSchedule = scheduleData.find(
+//       (s) => s.id === selectedSchedules[0]
+//     );
 //     if (selectedSchedule.status !== "Pending") {
 //       alert("Split is only available for schedules with 'Pending' status");
 //       return;
@@ -942,23 +978,29 @@ export default function QueryCondition() {
 //     }
 
 //     const itemsPerDivision = Math.ceil(scheduleMaterials.length / divisions);
-//     const selectedSchedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
+//     const selectedSchedule = scheduleData.find(
+//       (s) => s.id === selectedSchedules[0]
+//     );
 //     const preview = [];
 
 //     for (let i = 0; i < divisions; i++) {
 //       const startIndex = i * itemsPerDivision;
 //       const endIndex = Math.min((i + 1) * itemsPerDivision, scheduleMaterials.length);
-//       const subScheduleItems = scheduleMaterials.slice(startIndex, endIndex).map((item, index) => ({
-//         ...item,
-//         sequenceNo: (index + 1).toString().padStart(3, "0"),
-//       }));
+//       const subScheduleItems = scheduleMaterials
+//         .slice(startIndex, endIndex)
+//         .map((item, index) => ({
+//           ...item,
+//           sequenceNo: (index + 1).toString().padStart(3, "0"),
+//         }));
 
 //       preview.push({
-//         newScheduleNo: `${selectedSchedule.scheduleNo}-${(i + 1).toString().padStart(2, "0")}`,
+//         newScheduleNo: `${selectedSchedule.scheduleNo}-${(i + 1)
+//           .toString()
+//           .padStart(2, "0")}`,
 //         items: subScheduleItems,
 //         totalMaterialNumber: subScheduleItems.length,
 //         totalMatWeight: subScheduleItems.reduce(
-//           (sum, item) => sum + (parseFloat(item.outActualWeight) || 0),
+//           (sum, item) => sum + (parseFloat(item.inactualWeight) || 0),
 //           0
 //         ),
 //       });
@@ -968,47 +1010,43 @@ export default function QueryCondition() {
 //   };
 
 //   const handleSplitConfirm = async () => {
-//     if (!splitPreview || selectedSchedules.length !== 1) return;
+//     if (!splitPreview) return;
 
-//     setLoading(true);
-//     try {
-//       await splitSchedule(selectedSchedules[0], parseInt(splitDivisions));
-//       const schedules = await getSchedules();
-//       setScheduleData(schedules);
-//       setIsSplitDialogOpen(false);
-//       setSelectedSchedules([]);
-//       setSelectedMaterials([]);
-//       setSplitPreview(null);
-//       setRuleCheckHighlighted(true);
-//     } catch (err) {
-//       setError(err.message);
-//     } finally {
-//       setLoading(false);
+//     const scheduleId = parseInt(selectedSchedules[0]);
+//     const result = await splitSchedule(scheduleId, parseInt(splitDivisions));
+
+//     if (result.success) {
+//       const schedulesResult = await getSchedules();
+//       if (schedulesResult.success) {
+//         setScheduleData(schedulesResult.data);
+//         setMaterialData((prev) => {
+//           const updated = prev.filter(
+//             (m) => m.scheduleNo !== scheduleData.find((s) => s.id === scheduleId)?.scheduleNo
+//           );
+//           splitPreview.forEach((preview) => {
+//             preview.items.forEach((item) => {
+//               updated.push({ ...item, scheduleNo: preview.newScheduleNo });
+//             });
+//           });
+//           return updated;
+//         });
+//         setIsSplitDialogOpen(false);
+//         setSelectedSchedules([]);
+//         setSelectedMaterials([]);
+//         setSplitPreview(null);
+//         setRuleCheckHighlighted(true);
+//       } else {
+//         setError("Failed to refresh schedules: " + schedulesResult.error);
+//       }
+//     } else {
+//       setError("Failed to split schedule: " + result.error);
 //     }
 //   };
 
 //   const handleUpdate = async () => {
-//     if (selectedSchedules.length !== 1) {
-//       alert("Please select exactly one schedule to update");
-//       return;
-//     }
-//     const schedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
-//     setLoading(true);
-//     try {
-//       await updateSchedule(schedule.id, {
-//         status: schedule.status, // Example: modify as needed
-//         totalMaterialNumber: schedule.totalMaterialNumber,
-//         totalMatWeight: schedule.totalMatWeight,
-//         totalRollingLength: schedule.totalRollingLength,
-//         estimatedTime: schedule.estimatedTime,
-//         madeBy: schedule.madeBy,
-//       });
-//       setRuleCheckHighlighted(true);
-//     } catch (err) {
-//       setError(err.message);
-//     } finally {
-//       setLoading(false);
-//     }
+//     // Placeholder: Update status or other fields as needed
+//     alert("Update functionality not implemented yet");
+//     setRuleCheckHighlighted(true);
 //   };
 
 //   const handleDelete = async () => {
@@ -1017,19 +1055,25 @@ export default function QueryCondition() {
 //       return;
 //     }
 
-//     setLoading(true);
-//     try {
-//       await deleteMaterials(selectedMaterials);
-//       const schedules = await getSchedules();
-//       const materials = await getMaterialsByScheduleIds(selectedSchedules);
-//       setScheduleData(schedules);
-//       setMaterialData(materials);
-//       setSelectedMaterials([]);
-//       setRuleCheckHighlighted(true);
-//     } catch (err) {
-//       setError(err.message);
-//     } finally {
-//       setLoading(false);
+//     const result = await deleteMaterials(selectedMaterials);
+//     if (result.success) {
+//       const schedulesResult = await getSchedules();
+//       const materialsResult = await getMaterialsByScheduleNos(
+//         scheduleData.map((s) => s.scheduleNo)
+//       );
+//       if (schedulesResult.success && materialsResult.success) {
+//         setScheduleData(schedulesResult.data);
+//         setMaterialData(materialsResult.data);
+//         setSelectedMaterials([]);
+//         setRuleCheckHighlighted(true);
+//       } else {
+//         setError(
+//           "Failed to refresh data: " +
+//             (schedulesResult.error || materialsResult.error)
+//         );
+//       }
+//     } else {
+//       setError("Failed to delete materials: " + result.error);
 //     }
 //   };
 
@@ -1041,16 +1085,20 @@ export default function QueryCondition() {
 //     ).length;
 //   };
 
-//   const isSplitAllowed = () =>
-//     selectedSchedules.length === 1 &&
-//     scheduleData.find((s) => s.id === selectedSchedules[0])?.status === "Pending";
+//   const isSplitAllowed = () => {
+//     return (
+//       selectedSchedules.length === 1 &&
+//       scheduleData.find((s) => s.id === selectedSchedules[0])?.status === "Pending"
+//     );
+//   };
+
+//   if (loading) return <div className="text-white">Loading...</div>;
+//   if (error) return <div className="text-red-500">{error}</div>;
 
 //   return (
 //     <div className="min-h-screen bg-gray-900 py-8 px-4">
 //       <div className="max-w-[95%] mx-auto">
 //         <h1 className="text-3xl font-bold mb-8 text-white">Query Condition</h1>
-//         {error && <p className="text-red-500 mb-4">{error}</p>}
-//         {loading && <p className="text-white mb-4">Loading...</p>}
 
 //         {/* First Table - Schedules */}
 //         <div className="text-white shadow-lg overflow-hidden mb-8 border border-white rounded-lg">
@@ -1059,19 +1107,38 @@ export default function QueryCondition() {
 //               <thead>
 //                 <tr className="bg-gray-700">
 //                   <th className="px-6 py-4 border border-white"></th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Schedule No.</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Status</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Material Number</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Mat Weight</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Rolling Length</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Estimated Time</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Made By</th>
-//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Created Date</th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Schedule No.
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Status
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Total Material Number
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Total Mat Weight
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Total Rolling Length
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Estimated Time
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Made By
+//                   </th>
+//                   <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                     Created Date
+//                   </th>
 //                 </tr>
 //               </thead>
 //               <tbody>
 //                 {scheduleData.map((schedule) => (
-//                   <tr key={schedule.id} className="hover:bg-indigo-600/20 transition-colors">
+//                   <tr
+//                     key={schedule.id}
+//                     className="hover:bg-indigo-600/20 transition-colors"
+//                   >
 //                     <td className="px-6 py-4 border border-white">
 //                       <Checkbox
 //                         checked={selectedSchedules.includes(schedule.id)}
@@ -1092,13 +1159,21 @@ export default function QueryCondition() {
 //                         {schedule.status}
 //                       </span>
 //                     </td>
-//                     <td className="px-6 py-4 border border-white">{schedule.totalMaterialNumber}</td>
-//                     <td className="px-6 py-4 border border-white">{schedule.totalMatWeight}</td>
-//                     <td className="px-6 py-4 border border-white">{schedule.totalRollingLength}</td>
-//                     <td className="px-6 py-4 border border-white">{schedule.estimatedTime}</td>
+//                     <td className="px-6 py-4 border border-white">
+//                       {schedule.totalMaterialNumber}
+//                     </td>
+//                     <td className="px-6 py-4 border border-white">
+//                       {schedule.totalMatWeight}
+//                     </td>
+//                     <td className="px-6 py-4 border border-white">
+//                       {schedule.totalRollingLength}
+//                     </td>
+//                     <td className="px-6 py-4 border border-white">
+//                       {schedule.estimatedTime}
+//                     </td>
 //                     <td className="px-6 py-4 border border-white">{schedule.madeBy}</td>
 //                     <td className="px-6 py-4 border border-white">
-//                       {new Date(schedule.createdDate).toISOString().split("T")[0]}
+//                       {schedule.createdDate.split("T")[0]}
 //                     </td>
 //                   </tr>
 //                 ))}
@@ -1106,7 +1181,9 @@ export default function QueryCondition() {
 //             </table>
 //           </div>
 //           <div className="p-4 flex justify-end gap-4">
-//             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Query</Button>
+//             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+//               Query
+//             </Button>
 //             <Button
 //               variant="outline"
 //               className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white"
@@ -1124,20 +1201,48 @@ export default function QueryCondition() {
 //                 <thead>
 //                   <tr className="bg-gray-700">
 //                     <th className="px-6 py-4 border border-indigo-300"></th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Number</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Sequence No.</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Mat Mo.</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Thickness</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Width</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Grade</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Coil Weight</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Actual Weight</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Material Summary</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Mat No.</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Thickness</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Width</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Grade</th>
-//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Actual Weight</th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Number
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Sequence No.
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Mat No.
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Thickness
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Width
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Grade
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Coil Weight
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Out Actual Weight
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Material Summary
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       In Mat No.
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       In Thickness
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       In Width
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Grade
+//                     </th>
+//                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">
+//                       Actual Weight
+//                     </th>
 //                   </tr>
 //                 </thead>
 //                 <tbody>
@@ -1148,34 +1253,67 @@ export default function QueryCondition() {
 //                       )
 //                     )
 //                     .map((material, index) => (
-//                       <tr key={material.id} className="hover:bg-indigo-600/20 transition-colors">
+//                       <tr
+//                         key={material.id}
+//                         className="hover:bg-indigo-600/20 transition-colors"
+//                       >
 //                         <td className="px-6 py-4 border border-white">
 //                           <Checkbox
 //                             checked={selectedMaterials.includes(material.id)}
 //                             onCheckedChange={() => handleMaterialSelect(material.id)}
 //                           />
 //                         </td>
-//                         <td className="px-6 py-4 border border-white">{(index + 1).toString().padStart(2, "0")}</td>
-//                         <td className="px-6 py-4 border border-white">{material.sequenceNo}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outMatMo}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outThickness}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outWidth}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outGrade}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outCoilWeight}</td>
-//                         <td className="px-6 py-4 border border-white">{material.outActualWeight}</td>
-//                         <td className="px-6 py-4 border border-white">{material.materialSummary}</td>
-//                         <td className="px-6 py-4 border border-white">{material.inMatNo}</td>
-//                         <td className="px-6 py-4 border border-white">{material.inThickness}</td>
-//                         <td className="px-6 py-4 border border-white">{material.inWidth}</td>
-//                         <td className="px-6 py-4 border border-white">{material.grade}</td>
-//                         <td className="px-6 py-4 border border-white">{material.actualWeight}</td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {(index + 1).toString().padStart(2, "0")}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.sequenceNo}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.outMaterialNo}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.outThickness || "-"}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.outWidth || "-"}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.outGrade || "-"}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.outCoilWeight || "-"}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inactualWeight}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.materialSummary}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inMatNo}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inThickness}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inWidth}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inGrade}
+//                         </td>
+//                         <td className="px-6 py-4 border border-white">
+//                           {material.inactualWeight}
+//                         </td>
 //                       </tr>
 //                     ))}
 //                 </tbody>
 //               </table>
 //             </div>
 //             <div className="p-4 bg-gray-900 flex flex-wrap gap-4">
-//               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Query</Button>
+//               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+//                 Query
+//               </Button>
 //               <Button
 //                 variant="outline"
 //                 className={`border-white text-indigo-300 hover:bg-indigo-600 hover:text-white ${
@@ -1272,7 +1410,9 @@ export default function QueryCondition() {
 
 //             {(sequenceChangeMode === "before" || sequenceChangeMode === "after") && (
 //               <div>
-//                 <label className="block text-sm font-medium mb-2">Select reference item:</label>
+//                 <label className="block text-sm font-medium mb-2">
+//                   Select reference item:
+//                 </label>
 //                 <select
 //                   value={referencePosition}
 //                   onChange={(e) => setReferencePosition(e.target.value)}
@@ -1299,7 +1439,6 @@ export default function QueryCondition() {
 //             <Button
 //               onClick={handleSequenceChange}
 //               className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
-//               disabled={loading}
 //             >
 //               Apply
 //             </Button>
@@ -1342,8 +1481,8 @@ export default function QueryCondition() {
 //                 className="bg-gray-700 border-indigo-300 text-white"
 //               />
 //               <p className="text-sm text-gray-400 mt-1">
-//                 Will swap with {selectedMaterials.length} consecutive position(s) starting from this
-//                 position
+//                 Will swap with {selectedMaterials.length} consecutive position(s)
+//                 starting from this position
 //               </p>
 //             </div>
 //           </div>
@@ -1358,7 +1497,6 @@ export default function QueryCondition() {
 //             <Button
 //               onClick={handleSwap}
 //               className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
-//               disabled={loading}
 //             >
 //               Swap
 //             </Button>
@@ -1378,7 +1516,9 @@ export default function QueryCondition() {
 //           </DialogHeader>
 //           <div className="py-4 space-y-4">
 //             <div>
-//               <label className="block text-sm font-medium mb-2">Number of Divisions:</label>
+//               <label className="block text-sm font-medium mb-2">
+//                 Number of Divisions:
+//               </label>
 //               <div className="flex">
 //                 <Input
 //                   type="number"
@@ -1402,7 +1542,10 @@ export default function QueryCondition() {
 //                 <h3 className="text-lg font-medium mb-2">Preview:</h3>
 //                 <div className="space-y-4 max-h-[50vh] overflow-y-auto">
 //                   {splitPreview.map((preview, index) => (
-//                     <div key={`${preview.newScheduleNo}-${index}`} className="border border-indigo-300 p-4 rounded">
+//                     <div
+//                       key={`${preview.newScheduleNo}-${index}`}
+//                       className="border border-indigo-300 p-4 rounded"
+//                     >
 //                       <h4 className="font-semibold">{preview.newScheduleNo}</h4>
 //                       <p>Items: {preview.totalMaterialNumber}</p>
 //                       <p>Total Weight: {preview.totalMatWeight}</p>
@@ -1419,10 +1562,12 @@ export default function QueryCondition() {
 //                           <tbody>
 //                             {preview.items.map((item, itemIndex) => (
 //                               <tr key={`${item.id}-${index}-${itemIndex}`}>
-//                                 <td className="p-2">{(itemIndex + 1).toString().padStart(2, "0")}</td>
+//                                 <td className="p-2">
+//                                   {(itemIndex + 1).toString().padStart(2, "0")}
+//                                 </td>
 //                                 <td className="p-2">{item.sequenceNo}</td>
-//                                 <td className="p-2">{item.outMatMo}</td>
-//                                 <td className="p-2">{item.outActualWeight}</td>
+//                                 <td className="p-2">{item.outMaterialNo}</td>
+//                                 <td className="p-2">{item.inactualWeight}</td>
 //                               </tr>
 //                             ))}
 //                           </tbody>
@@ -1446,7 +1591,6 @@ export default function QueryCondition() {
 //               <Button
 //                 onClick={handleSplitConfirm}
 //                 className="bg-indigo-600 hover:bg-indigo-700 text-white ml-2"
-//                 disabled={loading}
 //               >
 //                 Confirm Split
 //               </Button>
