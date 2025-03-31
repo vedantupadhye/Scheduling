@@ -73,32 +73,34 @@ model InputMaterial {
 
 
 model RuleTable {
-  id          Int      @id @default(autoincrement())
-  ruleNo      String   @unique
-  ruleName    String   @unique // Make ruleName unique to use it as a foreign key
+  id          Int            @id @default(autoincrement())
+  ruleNo      String
+  ruleName    String         @unique
   remark      String?
-  modifyDate  DateTime @updatedAt
-  createDate  DateTime @default(now())
   createdBy   String
+  createDate  DateTime       @default(now())
+  modifyDate  DateTime       @default(now()) @updatedAt
   criteria    RuleCriteria[]
 }
 
 model RuleCriteria {
-  id                   Int      @id @default(autoincrement())
-  ruleName             String   // Change ruleId to ruleName for joining
-  criteria             String
-  parameterType        String?
-  parameterValue       String?
-  parameterMin         Float?
-  parameterMax         Float?
-  logic                String?
-  controlParameter     String?
-  controlInputType     String?
-  controlValue         String?
-  controlMin           Float?
-  controlMax           Float?
-  parameterStatus      String   @default("Enable")
-  rule                 RuleTable @relation(fields: [ruleName], references: [ruleName], onDelete: Cascade)
+  id               Int            @id @default(autoincrement())
+  ruleName         String
+  criteria         String
+  parameterType    String?
+  parameterValue   String?        // For "Input Value" type
+  controlParameter String?
+  parameterStatus  String         @default("Enable")
+  rule             RuleTable      @relation(fields: [ruleName], references: [ruleName], onDelete: Cascade)
+  ranges           CriteriaRange[] // New relation for multiple ranges
+}
+
+model CriteriaRange {
+  id             Int          @id @default(autoincrement())
+  ruleCriteriaId Int
+  parameterMin   Float?
+  parameterMax   Float?
+  ruleCriteria   RuleCriteria @relation(fields: [ruleCriteriaId], references: [id], onDelete: Cascade)
 }
 
 model MaterialAllocationRules {
@@ -129,6 +131,8 @@ model ScheduleConfirmation {
   inactualWeight    Float    // From Inventory.ActuallWeight (assuming typo in your schema)
   createdAt       DateTime @default(now())
 }
+
+
 model ScheduleMaker {
   id              Int      @id @default(autoincrement())
   orderNo         BigInt
