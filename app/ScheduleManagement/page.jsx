@@ -1095,7 +1095,7 @@ export default function QueryCondition() {
   const isSplitAllowed = () => {
     return (
       selectedSchedules.length === 1 &&
-      scheduleData.find((s) => s.id === selectedSchedules[0])?.status === "Pending"
+      scheduleData.find((s) => s.id === selectedSchedules[0])?.status === "Planned"
     );
   };
 
@@ -1141,7 +1141,8 @@ export default function QueryCondition() {
                             : "bg-yellow-600 text-white"
                         }`}
                       >
-                        {schedule.status}
+                        {/* {schedule.status} */}
+                        Planned
                       </span>
                     </td>
                     <td className="px-6 py-4 border border-white">{schedule.totalMaterialNumber}</td>
@@ -1179,7 +1180,7 @@ export default function QueryCondition() {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Grade</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Coil Weight</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Actual Weight</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Material Summary</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Material Status</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Mat No.</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Thickness</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Width</th>
@@ -1204,7 +1205,7 @@ export default function QueryCondition() {
                       <td className="px-6 py-4 border border-white">{material.outGrade}</td>
                       <td className="px-6 py-4 border border-white">{material.outCoilWeight}</td>
                       <td className="px-6 py-4 border border-white">{material.outActualWeight}</td>
-                      <td className="px-6 py-4 border border-white">{material.materialSummary}</td>
+                      <td className="px-6 py-4 border border-white">Planned</td>
                       <td className="px-6 py-4 border border-white">{material.inMatNo}</td>
                       <td className="px-6 py-4 border border-white">{material.inThickness}</td>
                       <td className="px-6 py-4 border border-white">{material.inWidth}</td>

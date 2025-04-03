@@ -154,6 +154,21 @@ async function main() {
       Manufacturing_Location: "Plant 1",
       Manufacturer: "SteelCorp Ltd.",
     },
+    {
+      IN_MaterialName: "IN20250311",
+      IN_Thickness: 4,
+      IN_Width: 1100,
+      IN_Weight: 15,
+      IN_Grade: "E150Br",
+      ActuallWeight: 490.5,
+      In_ProductionDate: new Date("2024-03-10T00:00:00.000Z"),
+      YardArrivalDate: new Date("2024-03-15T00:00:00.000Z"),
+      Residence_INYard: "Section A",
+      YardNO: "Y-101",
+      Position: "Y01010A02",
+      Manufacturing_Location: "Plant 1",
+      Manufacturer: "SteelCorp Ltd.",
+    },
   ];
   
   for (const material of materials) {

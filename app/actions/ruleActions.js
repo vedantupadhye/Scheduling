@@ -197,13 +197,14 @@ export async function createRule(formData) {
                 controlParameter: crit.controlParameterValues?.selectedOption || null,
                 parameterStatus: crit.parameterStatus || "Enable",
                 ranges: crit.parameterValues?.type === "Range" && crit.parameterValues.ranges.length > 0
-                  ? {
-                      create: crit.parameterValues.ranges.map((range) => ({
-                        parameterMin: range.min ? parseFloat(range.min) : null,
-                        parameterMax: range.max ? parseFloat(range.max) : null,
-                      })),
-                    }
-                  : undefined,
+                ? {
+                    create: crit.parameterValues.ranges.map((range) => ({
+                      parameterMin: range.min ? String(range.min) : null, // Convert to string
+                      parameterMax: range.max ? String(range.max) : null, // Convert to string
+                    })),
+                  }
+                : undefined,
+              
               })),
             }
           : undefined,
@@ -266,10 +267,11 @@ export async function updateRule(ruleName, formData) {
           await prisma.criteriaRange.createMany({
             data: crit.parameterValues.ranges.map((range) => ({
               ruleCriteriaId: createdCrit.id,
-              parameterMin: range.min ? parseFloat(range.min) : null,
-              parameterMax: range.max ? parseFloat(range.max) : null,
+              parameterMin: range.min ? String(range.min) : null,  // Convert to string
+              parameterMax: range.max ? String(range.max) : null,  // Convert to string
             })),
           });
+          
         }
       }
     }
@@ -293,6 +295,55 @@ export async function updateRule(ruleName, formData) {
 }
 
 // Delete a rule
+
+
+// export async function updateRule(ruleName, data) {
+//   const updatedRule = await prisma.ruleTable.update({
+//     where: { ruleName },
+//     data: {
+//       ruleNo: data.ruleNo,
+//       ruleName: data.ruleName,
+//       remark: data.remark || "",
+//       criteria: {
+//         upsert: data.criteria.map((crit) => ({
+//           where: {
+//             ruleName: data.ruleName, // Use the fields directly
+//             criteria: crit.criteria,
+//           },
+//           create: {
+//             criteria: crit.criteria,
+//             parameterType: crit.parameterValues.type,
+//             parameterValue: crit.parameterValues.value || "",
+//             controlParameter: crit.controlParameterValues.selectedOption,
+//             parameterStatus: crit.parameterStatus,
+//             ranges: {
+//               create: crit.parameterValues.ranges.map((range) => ({
+//                 parameterMin: range.fromGrade || range.min || "",
+//                 parameterMax: range.toGrade || range.max || "",
+//               })),
+//             },
+//           },
+//           update: {
+//             parameterType: crit.parameterValues.type,
+//             parameterValue: crit.parameterValues.value || "",
+//             controlParameter: crit.controlParameterValues.selectedOption,
+//             parameterStatus: crit.parameterStatus,
+//             ranges: {
+//               deleteMany: {}, // Clear existing ranges
+//               create: crit.parameterValues.ranges.map((range) => ({
+//                 parameterMin: range.fromGrade || range.min || "",
+//                 parameterMax: range.toGrade || range.max || "",
+//               })),
+//             },
+//           },
+//         })),
+//       },
+//     },
+//   });
+//   return { success: true, data: updatedRule };
+// }
+
+
 export async function deleteRule(ruleName) {
   try {
     await prisma.ruleTable.delete({

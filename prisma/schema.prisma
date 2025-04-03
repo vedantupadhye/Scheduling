@@ -93,13 +93,14 @@ model RuleCriteria {
   parameterStatus  String         @default("Enable")
   rule             RuleTable      @relation(fields: [ruleName], references: [ruleName], onDelete: Cascade)
   ranges           CriteriaRange[] // New relation for multiple ranges
+  @@unique([ruleName, criteria])
 }
 
 model CriteriaRange {
   id             Int          @id @default(autoincrement())
   ruleCriteriaId Int
-  parameterMin   Float?
-  parameterMax   Float?
+  parameterMin   String?      // Changed to String to support grades like "E250BR"
+  parameterMax   String?      // Changed to String to support grades like "E350BR"
   ruleCriteria   RuleCriteria @relation(fields: [ruleCriteriaId], references: [id], onDelete: Cascade)
 }
 
