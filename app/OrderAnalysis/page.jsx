@@ -62,8 +62,8 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-200">Order Analysis</h1>
+    <div className="min-h-screen  text-white p-6">
+      <h1 className="text-2xl font-bold mb-6 text-black">Order Analysis</h1>
       <div className="overflow-x-auto rounded-lg shadow-lg">
         <table className="w-full border border-gray-700 bg-gray-800 text-white rounded-lg">
           <thead>

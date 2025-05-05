@@ -716,7 +716,7 @@ export async function getSchedulesSummary() {
       return {
         id: firstItem.id.toString(),
         scheduleNo: schedule.scheduleNo,
-        status: 'Pending',
+        status: 'Planned',
         totalMaterialNumber: schedule._count.id,
         totalMatWeight: schedule._sum.outCoilWeight || schedule._sum.inactualWeight || 0,
         totalRollingLength: 900,

@@ -1215,32 +1215,108 @@ const RuleTable = () => {
   //   }
   // };
   
-  const handleSaveCriteria = async () => {
-    if (selectedRule) {
-      const criteriaData = criteriaList.map(({ criteria, controlParameter }) => ({
-        criteria,
-        parameterValues: parameterValues[criteria] || { type: "", value: "", ranges: [] },
-        controlParameterValues: { selectedOption: controlParameter },
-        parameterStatus: parameterStatus[criteria] || "Enable",
-      }));
 
+
+  // const handleSaveCriteria = async () => {
+  //   if (selectedRule) {
+  //     const criteriaData = criteriaList.map(({ criteria, controlParameter }) => ({
+  //       criteria,
+  //       parameterValues: parameterValues[criteria] || { type: "", value: "", ranges: [] },
+  //       controlParameterValues: { selectedOption: controlParameter },
+  //       parameterStatus: parameterStatus[criteria] || "Enable",
+  //     }));
+
+  //     const response = await updateRule(selectedRule.ruleName, {
+  //       ruleNo: selectedRule.ruleNo,
+  //       ruleName: selectedRule.ruleName,
+  //       remark: selectedRule.remark,
+  //       criteria: criteriaData,
+  //     });
+
+  //     if (response.success) {
+  //       setRules((prev) =>
+  //         prev.map((r) => (r.ruleName === selectedRule.ruleName ? response.data : r))
+  //       );
+  //       setSelectedRule(response.data);
+  //       setShowCriteriaForm(false);
+  //       alert("Criteria saved successfully!");
+  //     } else {
+  //       alert("Failed to save criteria: " + response.error);
+  //     }
+  //   }
+  // };
+
+
+  const handleSaveCriteria = async () => {
+    if (!selectedRule) return;
+    try {
+      const criteriaData = criteriaList.map(({ criteria, controlParameter }) => {
+        const paramValues = parameterValues[criteria] || { type: "", value: "", ranges: [] };
+        let processedParamValues = paramValues;
+  
+        if (paramValues.type === "Range" && Array.isArray(paramValues.ranges)) {
+          const cleanedRanges = paramValues.ranges
+            .filter(range => range !== null && typeof range === 'object')
+            .map(range => {
+              // Handle "Grade change" specifically
+              if (criteria === "Grade change" && range.fromGrade && range.toGrade) {
+                return {
+                  min: String(range.fromGrade).trim(),
+                  max: String(range.toGrade).trim()
+                };
+              }
+              // Handle other criteria with min/max
+              return {
+                min: range.min !== undefined && range.min !== null ? String(range.min).trim() : null,
+                max: range.max !== undefined && range.max !== null ? String(range.max).trim() : null
+              };
+            })
+            .filter(range => range.min !== null || range.max !== null);
+  
+          console.log(`Criteria ${criteria} - cleaned ranges:`, JSON.stringify(cleanedRanges, null, 2));
+  
+          processedParamValues = {
+            ...paramValues,
+            ranges: cleanedRanges
+          };
+        }
+  
+        return {
+          criteria,
+          parameterValues: processedParamValues,
+          controlParameterValues: { selectedOption: controlParameter },
+          parameterStatus: parameterStatus[criteria] || "Enable",
+        };
+      });
+  
+      console.log("Sending criteria data to backend from handleSaveCriteria:", JSON.stringify(criteriaData, null, 2));
+  
       const response = await updateRule(selectedRule.ruleName, {
         ruleNo: selectedRule.ruleNo,
         ruleName: selectedRule.ruleName,
         remark: selectedRule.remark,
         criteria: criteriaData,
       });
-
+  
       if (response.success) {
         setRules((prev) =>
           prev.map((r) => (r.ruleName === selectedRule.ruleName ? response.data : r))
         );
         setSelectedRule(response.data);
         setShowCriteriaForm(false);
-        alert("Criteria saved successfully!");
+  
+        const rangesSaved = response.data.criteria.some(crit => crit.ranges && crit.ranges.length > 0);
+        if (rangesSaved) {
+          alert("Criteria saved successfully with ranges!");
+        } else {
+          alert("Criteria saved but no ranges were saved. Check console for details.");
+        }
       } else {
-        alert("Failed to save criteria: " + response.error);
+        setError("Failed to save criteria: " + response.error);
       }
+    } catch (err) {
+      setError("Error saving criteria: " + err.message);
+      console.error("Error in handleSaveCriteria:", err);
     }
   };
 
@@ -1249,29 +1325,64 @@ const RuleTable = () => {
     try {
       const criteriaData = criteriaList.map(({ criteria, controlParameter }) => {
         const paramValues = parameterValues[criteria] || { type: "", value: "", ranges: [] };
+        let processedParamValues = paramValues;
+  
+        if (paramValues.type === "Range" && Array.isArray(paramValues.ranges)) {
+          const cleanedRanges = paramValues.ranges
+            .filter(range => range !== null && typeof range === 'object')
+            .map(range => {
+              // Handle "Grade change" specifically
+              if (criteria === "Grade change" && range.fromGrade && range.toGrade) {
+                return {
+                  min: String(range.fromGrade).trim(),
+                  max: String(range.toGrade).trim()
+                };
+              }
+              // Handle other criteria with min/max
+              return {
+                min: range.min !== undefined && range.min !== null ? String(range.min).trim() : null,
+                max: range.max !== undefined && range.max !== null ? String(range.max).trim() : null
+              };
+            })
+            .filter(range => range.min !== null || range.max !== null);
+  
+          console.log(`Criteria ${criteria} - cleaned ranges:`, JSON.stringify(cleanedRanges, null, 2));
+  
+          processedParamValues = {
+            ...paramValues,
+            ranges: cleanedRanges
+          };
+        }
+  
         return {
           criteria,
-          parameterValues: criteria === "Grade change" && paramValues.type === "Range" 
-            ? { type: paramValues.type, ranges: paramValues.ranges }
-            : paramValues,
+          parameterValues: processedParamValues,
           controlParameterValues: { selectedOption: controlParameter },
           parameterStatus: parameterStatus[criteria] || "Enable",
         };
       });
-
+  
+      console.log("Sending criteria data to backend:", JSON.stringify(criteriaData, null, 2));
+  
       const response = await updateRule(selectedRule.ruleName, {
         ruleNo: selectedRule.ruleNo,
         ruleName: selectedRule.ruleName,
         remark: selectedRule.remark,
         criteria: criteriaData,
       });
-
+  
       if (response.success) {
         setRules((prev) =>
           prev.map((r) => (r.ruleName === selectedRule.ruleName ? response.data : r))
         );
         setSelectedRule(response.data);
-        alert("Rule updated successfully!");
+  
+        const rangesSaved = response.data.criteria.some(crit => crit.ranges && crit.ranges.length > 0);
+        if (rangesSaved) {
+          alert("Rule updated successfully with ranges!");
+        } else {
+          alert("Rule updated but no ranges were saved. Check console for details.");
+        }
       } else {
         setError("Failed to update rule: " + response.error);
       }
@@ -1280,6 +1391,48 @@ const RuleTable = () => {
     }
   };
 
+/**
+ * Additional helper function to check if your ranges are properly formed in the UI
+ */
+const validateRanges = () => {
+  let isValid = true;
+  const validationErrors = [];
+  
+  criteriaList.forEach(({ criteria }) => {
+    const paramValues = parameterValues[criteria] || { type: "", value: "", ranges: [] };
+    
+    if (paramValues.type === "Range") {
+      if (!Array.isArray(paramValues.ranges)) {
+        validationErrors.push(`${criteria}: Ranges is not an array`);
+        isValid = false;
+      } else if (paramValues.ranges.length === 0) {
+        validationErrors.push(`${criteria}: No ranges defined`);
+        isValid = false;
+      } else {
+        paramValues.ranges.forEach((range, index) => {
+          if (range.min === undefined || range.min === "") {
+            validationErrors.push(`${criteria} range ${index+1}: Missing min value`);
+            isValid = false;
+          }
+          if (range.max === undefined || range.max === "") {
+            validationErrors.push(`${criteria} range ${index+1}: Missing max value`);
+            isValid = false;
+          }
+        });
+      }
+    }
+  });
+  
+  return { isValid, errors: validationErrors };
+};
+
+// Add this to your handleUpdate function before sending the request
+// const { isValid, errors } = validateRanges();
+// if (!isValid) {
+//   console.error("Range validation errors:", errors);
+//   // alert("Please fix the following issues with your ranges:\n" + errors.join("\n"));
+//   return;
+// }
   const handleDelete = async () => {
     if (!selectedRule) return;
     try {
@@ -1302,7 +1455,7 @@ const RuleTable = () => {
   }
 
   return (
-    <div className="p-4 bg-gray-900 text-white">
+    <div className="p-4  text-white">
       {/* Search Inputs */}
       <div className="mb-4 grid grid-cols-3 gap-4">
         <input
@@ -1310,26 +1463,26 @@ const RuleTable = () => {
           placeholder="Search by Rule No."
           value={searchRuleNo}
           onChange={(e) => setSearchRuleNo(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-full"
+          className="p-2 border border-black text-black rounded w-full"
         />
         <input
           type="text"
           placeholder="Search by Rule Name"
           value={searchRuleName}
           onChange={(e) => setSearchRuleName(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-full"
+          className="p-2 border border-black text-black rounded w-full"
         />
         <input
           type="text"
           placeholder="Search by Remark"
           value={searchRemark}
           onChange={(e) => setSearchRemark(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-full"
+          className="p-2 border border-black text-black rounded w-full"
         />
       </div>
 
       {/* Main Table */}
-      <table className="min-w-full border border-gray-300">
+      <table className="min-w-full border border-gray-300  bg-gray-900">
         <thead>
           <tr className="bg-gray-700">
             <th className="border p-2"><input type="checkbox" /></th>
@@ -1366,19 +1519,19 @@ const RuleTable = () => {
         </tbody>
       </table>
       <div className="mb-4 flex space-x-4 mt-4">
-        <button onClick={handleInsert} className="bg-purple-400 text-white px-4 py-2 rounded">
+        <button onClick={handleInsert} className="bg-blue-600 text-white px-4 py-2 rounded">
           Insert
         </button>
         <button
           onClick={handleUpdate}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
           disabled={!selectedRule || isInserting}
         >
           Update
         </button>
         <button
           onClick={handleDelete}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-orange-500 text-white px-4 py-2 rounded"
           disabled={!selectedRule || isInserting}
         >
           Delete
@@ -1434,7 +1587,7 @@ const RuleTable = () => {
           <h3 className="text-lg font-semibold mb-2">
             {showCriteriaForm ? `Add Criteria for ${selectedRule?.ruleName}` : `Details for ${selectedRule?.ruleName}`}
           </h3>
-          <table className="min-w-full border border-gray-300">
+          <table className="min-w-full border border-gray-300 bg-gray-900">
             <thead>
               <tr className="bg-gray-700">
                 <th className="border p-2">Criteria</th>
@@ -1557,7 +1710,7 @@ const RuleTable = () => {
           </table>
           <button
             onClick={handleSaveCriteria}
-            className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+            className="mt-4 bg-orange-500 text-white px-4 py-2 rounded"
           >
             Save Criteria
           </button>

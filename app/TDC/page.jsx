@@ -175,7 +175,7 @@ const TDCRollingValidator = () => {
   };
 
   return (
-    <Card className="w-full min-h-screen bg-gray-900 text-white">
+    <Card className="w-full min-h-screen  text-black">
       <CardHeader>
         <CardTitle className="text-2xl">TDC Rolling Validator</CardTitle>
       </CardHeader>
@@ -184,6 +184,7 @@ const TDCRollingValidator = () => {
           <Button
             onClick={handleManualEntry}
             variant={inputMethod === "manual" ? "default" : "outline"}
+            className="bg-blue-600 text-white cursor-pointer"
           >
             Enter Manually
           </Button>
@@ -208,8 +209,9 @@ const TDCRollingValidator = () => {
                 className="flex-1"
               />
               <Button
-                className="bg-blue-500 text-white cursor-pointer"
+                className="bg-blue-600 text-white cursor-pointer"
                 onClick={handleCodeSubmit}
+                
               >
                 Submit
               </Button>
@@ -237,7 +239,7 @@ const TDCRollingValidator = () => {
           <div className="mt-6">
             <h3 className="text-lg font-medium mb-4">Validation Results</h3>
             <div className="overflow-x-auto">
-              <Table className="w-full border border-gray-700">
+              <Table className="w-full border border-gray-700 bg-gray-800 text-white">
                 <TableHeader className="bg-gray-700 border-b border-gray-300">
                   <TableRow className="divide-x bg-gray-700">
                     <TableHead className="px-4 py-2">Name</TableHead>

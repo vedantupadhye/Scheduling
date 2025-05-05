@@ -36,7 +36,6 @@ model Order {
   balanceWeight          Int?  // Nullable
   balanceNumber          Int?  // Nullable
   leastProductionDate    DateTime?  // Nullable
-
   timeToShip            Int?
   timeForQualityCheck   Int?
 }

@@ -19,9 +19,9 @@ export default function OrderProcessingTable() {
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">Order Processing</h1>
 
-      <table className="w-full border border-gray-300">
+      <table className="w-full border border-gray-300 bg-gray-900 text-white">
         <thead>
-          <tr className="bg-gray-200">
+          <tr className="bg-gray-700">
             <th className="border p-2">Order No.</th>
             <th className="border p-2">Time to Ship</th>
             <th className="border p-2">Time for Quality Check</th>

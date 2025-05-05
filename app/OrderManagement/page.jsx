@@ -477,36 +477,36 @@ const handleFileUpload = (e) => {
   });
 
   return (
-    <div className="p-6 min-h-screen bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold mb-4 text-center">Order Management</h1>
+    <div className="p-6 min-h-screen  text-white">
+      <h1 className="text-2xl text-black font-bold mb-4 text-center">Order Management</h1>
 
       {/* Filters Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by Grade"
-          className="border border-white p-2 rounded text-white"
+          className="border border-black p-2 rounded text-black"
           value={searchGrade}
           onChange={(e) => setSearchGrade(e.target.value)}
         />
         <input
           type="text"
           placeholder="Search by Delivery Place"
-          className="border border-white p-2 rounded text-white"
+          className="border border-black p-2 rounded text-black"
           value={searchDeliveryPlace}
           onChange={(e) => setSearchDeliveryPlace(e.target.value)}
         />
         <input
           type="number"
           placeholder="Thickness"
-          className="border border-white p-2 rounded text-white"
+          className="border border-black p-2 rounded text-black"
           value={searchThickness}
           onChange={(e) => setSearchThickness(e.target.value)}
         />
         <input
           type="number"
           placeholder="Width"
-          className="border border-white p-2 rounded text-white"
+          className="border border-black p-2 rounded text-black"
           value={searchWidth}
           onChange={(e) => setSearchWidth(e.target.value)}
         />
@@ -517,7 +517,7 @@ const handleFileUpload = (e) => {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border border-gray-700">
+        <table className="w-full border border-gray-700 bg-gray-800">
           <thead>
             <tr className="bg-gray-700">
               <th className="border p-2">Select</th>
@@ -590,13 +590,13 @@ const handleFileUpload = (e) => {
             setShowForm(true);
             setError("");
           }}
-          className="bg-black text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           Insert
         </button>
         <button
           onClick={handleUpdate}
-          className="bg-black text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           Update
         </button>

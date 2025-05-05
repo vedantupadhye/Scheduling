@@ -765,6 +765,130 @@ export default function QueryCondition() {
   const [splitPreview, setSplitPreview] = useState(null);
   const [ruleCheckHighlighted, setRuleCheckHighlighted] = useState(false);
 
+  const [scheduleSortConfig, setScheduleSortConfig] = useState({
+    key: null,
+    direction: 'ascending',
+  });
+  const [materialSortConfig, setMaterialSortConfig] = useState({
+    key: null,
+    direction: 'ascending',
+  });
+
+  // Sort schedule data
+  const getSortedScheduleData = () => {
+    if (!scheduleSortConfig.key) return scheduleData;
+
+    return [...scheduleData].sort((a, b) => {
+      // Handle numeric fields differently
+      const numericFields = ['totalMaterialNumber', 'totalMatWeight', 'totalRollingLength'];
+      if (numericFields.includes(scheduleSortConfig.key)) {
+        const aValue = parseFloat(a[scheduleSortConfig.key]) || 0;
+        const bValue = parseFloat(b[scheduleSortConfig.key]) || 0;
+        return scheduleSortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Handle date fields
+      if (scheduleSortConfig.key === 'createdDate') {
+        const aDate = new Date(a[scheduleSortConfig.key]);
+        const bDate = new Date(b[scheduleSortConfig.key]);
+        return scheduleSortConfig.direction === 'ascending' ? aDate - bDate : bDate - aDate;
+      }
+
+      // Default string comparison
+      if (a[scheduleSortConfig.key] < b[scheduleSortConfig.key]) {
+        return scheduleSortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (a[scheduleSortConfig.key] > b[scheduleSortConfig.key]) {
+        return scheduleSortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  // Sort material data
+  const getSortedMaterialData = () => {
+    if (!materialSortConfig.key) return materialData;
+
+    return [...materialData].sort((a, b) => {
+      // Handle numeric fields differently
+      const numericFields = ['outThickness', 'outWidth', 'outCoilWeight', 'outActualWeight', 
+                            'inThickness', 'inWidth', 'actualWeight'];
+      if (numericFields.includes(materialSortConfig.key)) {
+        const aValue = parseFloat(a[materialSortConfig.key]) || 0;
+        const bValue = parseFloat(b[materialSortConfig.key]) || 0;
+        return materialSortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Handle sequence number specially
+      if (materialSortConfig.key === 'sequenceNo') {
+        const aNum = parseInt(a.sequenceNo);
+        const bNum = parseInt(b.sequenceNo);
+        return materialSortConfig.direction === 'ascending' ? aNum - bNum : bNum - aNum;
+      }
+
+      // Default string comparison
+      if (a[materialSortConfig.key] < b[materialSortConfig.key]) {
+        return materialSortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (a[materialSortConfig.key] > b[materialSortConfig.key]) {
+        return materialSortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  // Request sort for schedules
+  const requestScheduleSort = (key) => {
+    let direction = 'ascending';
+    if (scheduleSortConfig.key === key && scheduleSortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setScheduleSortConfig({ key, direction });
+  };
+
+  // Request sort for materials
+  const requestMaterialSort = (key) => {
+    let direction = 'ascending';
+    if (materialSortConfig.key === key && materialSortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setMaterialSortConfig({ key, direction });
+  };
+
+  // Render sortable header for schedules
+  const renderScheduleSortableHeader = (key, label) => {
+    return (
+      <th 
+        className="px-6 py-4 text-left text-sm font-semibold text-white border border-white cursor-pointer hover:bg-gray-600"
+        onClick={() => requestScheduleSort(key)}
+      >
+        {label}
+        {scheduleSortConfig.key === key && (
+          <span className="ml-1">
+            {scheduleSortConfig.direction === 'ascending' ? '↑' : '↓'}
+          </span>
+        )}
+      </th>
+    );
+  };
+
+  // Render sortable header for materials
+  const renderMaterialSortableHeader = (key, label) => {
+    return (
+      <th 
+        className="px-6 py-4 text-left text-sm font-semibold text-white border border-white cursor-pointer hover:bg-gray-600"
+        onClick={() => requestMaterialSort(key)}
+      >
+        {label}
+        {materialSortConfig.key === key && (
+          <span className="ml-1">
+            {materialSortConfig.direction === 'ascending' ? '↑' : '↓'}
+          </span>
+        )}
+      </th>
+    );
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const schedulesResult = await getSchedulesSummary();
@@ -777,6 +901,7 @@ export default function QueryCondition() {
     loadData();
   }, []);
 
+  
   const handleScheduleSelect = async (id) => {
     const newSelected = selectedSchedules.includes(id)
       ? selectedSchedules.filter((i) => i !== id)
@@ -946,8 +1071,8 @@ export default function QueryCondition() {
       return;
     }
     const selectedSchedule = scheduleData.find((s) => s.id === selectedSchedules[0]);
-    if (selectedSchedule.status !== "Pending") {
-      alert("Split is only available for schedules with 'Pending' status");
+    if (selectedSchedule.status !== "Planned") {
+      alert("Split is only available for schedules with 'Planned' status");
       return;
     }
     const allMaterialIds = materialData
@@ -1100,29 +1225,29 @@ export default function QueryCondition() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="min-h-screen text-black py-8 px-4">
       <div className="max-w-[95%] mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-white">Schedule Management</h1>
+        <h1 className="text-3xl font-bold mb-8 text-black">Schedule Management</h1>
 
         {/* First Table - Schedules */}
-        <div className="text-white shadow-lg overflow-hidden mb-8 border border-white rounded-lg">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+        <div className="text-white shadow-lg overflow-hidden mb-8 border border-white rounded-lg bg-gray-900">
+          <div className="overflow-x-auto bg-gray-900">
+          <table className="w-full border-collapse bg-gray-900 text-white">
               <thead>
                 <tr className="bg-gray-700">
                   <th className="px-6 py-4 border border-white"></th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Schedule No.</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Material Number</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Mat Weight</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Total Rolling Length</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Estimated Time</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Made By</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Created Date</th>
+                  {renderScheduleSortableHeader('scheduleNo', 'Schedule No.')}
+                  {renderScheduleSortableHeader('status', 'Status')}
+                  {renderScheduleSortableHeader('totalMaterialNumber', 'Total Material Number')}
+                  {renderScheduleSortableHeader('totalMatWeight', 'Total Mat Weight')}
+                  {renderScheduleSortableHeader('totalRollingLength', 'Total Rolling Length')}
+                  {renderScheduleSortableHeader('EstimatedTime', 'Estimated Time')}
+                  {renderScheduleSortableHeader('madeBy', 'Made By')}
+                  {renderScheduleSortableHeader('createdDate', 'Created Date')}
                 </tr>
               </thead>
               <tbody>
-                {scheduleData.map((schedule) => (
+                {getSortedScheduleData().map((schedule) => (
                   <tr key={schedule.id} className="hover:bg-indigo-600/20 transition-colors">
                     <td className="px-6 py-4 border border-white">
                       <Checkbox
@@ -1141,8 +1266,7 @@ export default function QueryCondition() {
                             : "bg-yellow-600 text-white"
                         }`}
                       >
-                        {/* {schedule.status} */}
-                        Planned
+                        {schedule.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 border border-white">{schedule.totalMaterialNumber}</td>
@@ -1157,8 +1281,8 @@ export default function QueryCondition() {
             </table>
           </div>
           <div className="p-4 flex justify-end gap-4">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Query</Button>
-            <Button variant="outline" className="border-white text-indigo-300 hover:bg-indigo-600 hover:text-white">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">Query</Button>
+            <Button variant="outline" className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
               Rollback
             </Button>
           </div>
@@ -1168,28 +1292,28 @@ export default function QueryCondition() {
         {selectedSchedules.length > 0 && (
           <div className="bg-gray-900 shadow-lg overflow-hidden border text-white border-white rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse bg-gray-900 text-white">
                 <thead>
                   <tr className="bg-gray-700">
                     <th className="px-6 py-4 border border-indigo-300"></th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Number</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Sequence No.</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Mat Mo.</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Thickness</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Width</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Grade</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Coil Weight</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Out Actual Weight</th>
+                    {renderMaterialSortableHeader('sequenceNo', 'Sequence No.')}
+                    {renderMaterialSortableHeader('outMatMo', 'Out Mat Mo.')}
+                    {renderMaterialSortableHeader('outThickness', 'Out Thickness')}
+                    {renderMaterialSortableHeader('outWidth', 'Out Width')}
+                    {renderMaterialSortableHeader('outGrade', 'Out Grade')}
+                    {renderMaterialSortableHeader('outCoilWeight', 'Out Coil Weight')}
+                    {renderMaterialSortableHeader('outActualWeight', 'Out Actual Weight')}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Material Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Mat No.</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Thickness</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">In Width</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Grade</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white border border-white">Actual Weight</th>
+                    {renderMaterialSortableHeader('inMatNo', 'In Mat No.')}
+                    {renderMaterialSortableHeader('inThickness', 'In Thickness')}
+                    {renderMaterialSortableHeader('inWidth', 'In Width')}
+                    {renderMaterialSortableHeader('grade', 'Grade')}
+                    {renderMaterialSortableHeader('actualWeight', 'Actual Weight')}
                   </tr>
                 </thead>
                 <tbody>
-                  {materialData.map((material, index) => (
+                  {getSortedMaterialData().map((material, index) => (
                     <tr key={material.id} className="hover:bg-indigo-600/20 transition-colors">
                       <td className="px-6 py-4 border border-white">
                         <Checkbox

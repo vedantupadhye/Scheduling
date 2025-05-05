@@ -3358,18 +3358,18 @@ export default function SchedulePool() {
   // };
 // ... (rest of the code remains unchanged)
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-[95%] mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-white">Schedule Pool</h1>
+        <h1 className="text-3xl font-bold mb-8 text-black">Schedule Pool</h1>
 
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            <label className="text-white mr-4">Select Least Production Date:</label>
+            <label className="text-black mr-4">Select Least Production Date:</label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-gray-700 text-white border border-indigo-300 rounded p-2"
+              className=" text-black border border-indigo-300 rounded p-2"
             />
             <Button onClick={handleQuery} className="bg-indigo-600 text-white hover:bg-indigo-700">
               Query
@@ -3389,13 +3389,13 @@ export default function SchedulePool() {
             </Button>
           </div>
           <div className="flex items-center gap-4">
-            <label className="text-white font-semibold">Secondary Priority:</label>
+            <label className="text-black font-semibold">Secondary Priority:</label>
             <div className="flex bg-gray-800 rounded-full p-1">
               <button
                 onClick={() => setPriorityType("Position")}
                 className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                   priorityType === "Position"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-orange-600 text-white"
                     : "bg-transparent text-gray-300 hover:text-white"
                 }`}
               >
@@ -3405,7 +3405,7 @@ export default function SchedulePool() {
                 onClick={() => setPriorityType("YardArrivalDate")}
                 className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                   priorityType === "YardArrivalDate"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-orange-600 text-white"
                     : "bg-transparent text-gray-300 hover:text-white"
                 }`}
               >
@@ -3421,7 +3421,7 @@ export default function SchedulePool() {
         <div className="flex flex-col gap-8">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="lg:w-1/2 w-full">
-              <h2 className="text-xl font-semibold text-white mb-4">Orders</h2>
+              <h2 className="text-xl font-semibold text-black mb-4">Orders</h2>
               <div className="bg-gray-800 shadow-lg border border-white rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
@@ -3495,7 +3495,7 @@ export default function SchedulePool() {
             </div>
 
             <div className="lg:w-1/2 w-full">
-              <h2 className="text-xl font-semibold text-white mb-4">Matching Inventory</h2>
+              <h2 className="text-xl font-semibold text-black mb-4">Matching Inventory</h2>
               <div className="bg-gray-800 shadow-lg border border-white rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
@@ -3587,7 +3587,7 @@ export default function SchedulePool() {
           </div>
 
           <div className="w-full">
-            <h2 className="text-xl font-semibold text-white mb-4">Schedule Maker</h2>
+            <h2 className="text-3xl font-bold text-black mb-4">Schedule Maker</h2>
             <div className="bg-gray-800 shadow-lg border border-white rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>

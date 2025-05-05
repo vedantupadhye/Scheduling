@@ -241,7 +241,7 @@ export default function StackedBarChartServer() {
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Coil Production by Grade</h2>
+        <h2 className="text-xl text-black font-bold">Coil Production by Grade</h2>
         <div className="flex items-center space-x-4">
           <span>Display:</span>
           <div className="inline-flex rounded-md shadow-sm" role="group">
